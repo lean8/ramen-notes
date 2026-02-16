@@ -1,143 +1,119 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ramen Notes 2026</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #fff8f0; color: #333; padding: 20px; }
-    h1 { color: #d35400; text-align: center; }
-    h2 { border-bottom: 2px solid #d35400; padding-bottom: 5px; margin-top: 30px; }
-    .note { background: #fff3e0; padding: 10px; margin: 10px 0; border-radius: 5px; }
-    .note img { max-width: 100%; border-radius: 5px; margin-top: 5px; }
-    .date { font-weight: bold; color: #e67e22; }
-    .place { font-style: italic; }
-    .comment { margin-top: 5px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ramen Notes 2026</title>
+<style>
+  body { font-family: Arial, sans-serif; margin:0; padding:0; background:#fff8f0; color:#333; }
+  header { text-align:center; background:#d35400; color:#fff; padding:15px; font-size:1.5em; }
+  .container { display:flex; min-height:calc(100vh - 60px); }
+  aside { width:100px; background:#ffe6cc; padding:10px; box-sizing:border-box; }
+  aside button { display:block; width:100%; margin:5px 0; padding:5px; background:#fff3e0; border:none; border-radius:5px; cursor:pointer; }
+  aside button.active { background:#d35400; color:#fff; }
+  main { flex:1; padding:15px; overflow-y:auto; }
+  .note { background:#fff3e0; padding:10px; margin:10px 0; border-radius:5px; }
+  .note img { max-width:100%; border-radius:5px; margin-top:5px; }
+  .date { font-weight:bold; color:#e67e22; }
+  .place { font-style:italic; margin-bottom:5px; }
+  .comment { margin-top:5px; }
+  canvas { max-width:100%; margin-top:20px; }
+</style>
 </head>
 <body>
-  <h1>Ramen Notes 2026 🍜</h1>
 
-  <!-- 一月 -->
-  <h2>一月</h2>
+<header>Ramen Notes 2026 🍜</header>
+<div class="container">
+  <aside id="sidebar">
+    <button data-month="" class="active">統計</button>
+    <button data-month="01">一月</button>
+    <button data-month="02">二月</button>
+  </aside>
+  <main id="content">
+    <div id="notes"></div>
+    <canvas id="statsChart"></canvas>
+  </main>
+</div>
 
-  <div class="note">
-    <div class="date">01/03</div>
-    <div class="place">荷麵亭</div>
-    <div class="comment">濃厚的鹽味豚骨，湯頭非常香醇。</div>
-    <img src="images/image001.jpg" alt="荷麵亭 01/03">
-  </div>
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // 拉麵筆記資料
+  const ramenData = [
+    {date:'01/03', month:'01', place:'荷麵亭', comment:'濃厚的鹽味豚骨，湯頭非常香醇', image:'images/image001.jpg'},
+    {date:'01/04', month:'01', place:'麺処田冶', comment:'招牌醬油拉麵，口味偏重但個人不太喜歡', image:'images/image002.jpg'},
+    {date:'01/07', month:'01', place:'懸日拉麵', comment:'鳳醬油清湯，湯清味鮮，十分舒服', image:'images/image003.jpg'},
+    {date:'01/11', month:'01', place:'五之神製麵所', comment:'黃金鴨湯醬油拉麵（限定），口感濃郁，味道層次豐富', image:'images/image004.jpg'},
+    {date:'01/14', month:'01', place:'魚玠（中山）', comment:'特上醬油拉麵，魚香味明顯，湯頭清爽', image:'images/image005.jpg'},
+    {date:'01/17', month:'01', place:'赤麵廠', comment:'天神豚骨拉麵，湯濃厚，麵條Q彈', image:'images/image006.jpg'},
+    {date:'01/17', month:'01', place:'麥苗x一貫', comment:'臺日限定拉麵，口味創新，有特色', image:'images/image007.jpg'},
+    {date:'01/21', month:'01', place:'麵屋德家', comment:'牛肝菌雞貝鹽味拉麵，湯清味濃，十分喜歡', image:'images/image008.jpg'},
+    {date:'01/22', month:'01', place:'麵屋輝', comment:'叉燒魚介豚骨拉麵，味道平衡，叉燒軟嫩', image:'images/image009.jpg'},
+    {date:'01/24', month:'01', place:'麵屋德家', comment:'牛肝菌雞貝鹽味拉麵，口味穩定，每次都好吃', image:'images/image010.jpg'},
+    {date:'01/28', month:'01', place:'麵屋德家', comment:'牛肝菌雞貝鹽味拉麵，湯頭濃郁，麵條彈牙', image:'images/image011.jpg'},
+    {date:'01/31', month:'01', place:'麒麟拉麵', comment:'特級牛肝菌豚骨醬油拉麵，湯香濃厚，味道豐富', image:'images/image012.jpg'},
+    {date:'02/04', month:'02', place:'麵屋德家', comment:'牛肝菌雞貝鹽味拉麵，延續一月的好味道', image:'images/image013.jpg'},
+    {date:'02/07', month:'02', place:'古流拉麵', comment:'烏來馬告南門市場魚介香草拉麵（限定），香氣特別', image:'images/image014.jpg'},
+    {date:'02/08', month:'02', place:'五之神製麵所', comment:'鮮魚系秋刀魚醬油拉麵（限定），湯鮮味美', image:'images/image015.jpg'},
+    {date:'02/11', month:'02', place:'麵屋德家', comment:'牛肝菌雞貝鹽味拉麵，湯頭清爽，麵條彈牙', image:'images/image016.jpg'}
+  ];
 
-  <div class="note">
-    <div class="date">01/04</div>
-    <div class="place">麺処田冶</div>
-    <div class="comment">招牌醬油拉麵，口味偏重但個人不太喜歡。</div>
-    <img src="images/image002.jpg" alt="麺処田冶 01/04">
-  </div>
+  const notesDiv = document.getElementById('notes');
+  const statsCanvas = document.getElementById('statsChart');
+  const buttons = document.querySelectorAll('#sidebar button');
 
-  <div class="note">
-    <div class="date">01/07</div>
-    <div class="place">懸日拉麵</div>
-    <div class="comment">鳳醬油清湯，湯清味鮮，十分舒服。</div>
-    <img src="images/image003.jpg" alt="懸日拉麵 01/07">
-  </div>
+  let chart;
 
-  <div class="note">
-    <div class="date">01/11</div>
-    <div class="place">五之神製麵所</div>
-    <div class="comment">黃金鴨湯醬油拉麵（限定），口感濃郁，味道層次豐富。</div>
-    <img src="images/image004.jpg" alt="五之神製麵所 01/11">
-  </div>
+  function renderNotes(month){
+    notesDiv.innerHTML = '';
+    if(!month){
+      statsCanvas.style.display = 'block';
+      generateStats();
+      return;
+    }
+    statsCanvas.style.display = 'none';
+    const filtered = ramenData.filter(r => r.month === month);
+    filtered.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'note';
+      div.innerHTML = `
+        <div class="date">${r.date}</div>
+        <div class="place">${r.place}</div>
+        <div class="comment">${r.comment}</div>
+        <img src="${r.image}" alt="${r.place} ${r.date}">
+      `;
+      notesDiv.appendChild(div);
+    });
+  }
 
-  <div class="note">
-    <div class="date">01/14</div>
-    <div class="place">魚玠（中山）</div>
-    <div class="comment">特上醬油拉麵，魚香味明顯，湯頭清爽。</div>
-    <img src="images/image005.jpg" alt="魚玠 01/14">
-  </div>
+  function generateStats(){
+    const counts = {};
+    ramenData.forEach(r => {
+      counts[r.month] = (counts[r.month] || 0) + 1;
+    });
+    const ctx = statsCanvas.getContext('2d');
+    if(chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: Object.keys(counts).map(m=>m+'月'),
+        datasets:[{data:Object.values(counts), backgroundColor:['#f39c12','#e74c3c','#9b59b6','#3498db','#1abc9c','#2ecc71']}]
+      },
+      options:{plugins:{legend:{position:'bottom'}}}
+    });
+  }
 
-  <div class="note">
-    <div class="date">01/17</div>
-    <div class="place">赤麵廠</div>
-    <div class="comment">天神豚骨拉麵，湯濃厚，麵條Q彈。</div>
-    <img src="images/image006.jpg" alt="赤麵廠 01/17">
-  </div>
+  buttons.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      buttons.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const month = btn.getAttribute('data-month');
+      renderNotes(month);
+    });
+  });
 
-  <div class="note">
-    <div class="date">01/17</div>
-    <div class="place">麥苗x一貫</div>
-    <div class="comment">臺日限定拉麵，口味創新，有特色。</div>
-    <img src="images/image007.jpg" alt="麥苗x一貫 01/17">
-  </div>
-
-  <div class="note">
-    <div class="date">01/21</div>
-    <div class="place">麵屋德家</div>
-    <div class="comment">牛肝菌雞貝鹽味拉麵，湯清味濃，十分喜歡。</div>
-    <img src="images/image008.jpg" alt="麵屋德家 01/21">
-  </div>
-
-  <div class="note">
-    <div class="date">01/22</div>
-    <div class="place">麵屋輝</div>
-    <div class="comment">叉燒魚介豚骨拉麵，味道平衡，叉燒軟嫩。</div>
-    <img src="images/image009.jpg" alt="麵屋輝 01/22">
-  </div>
-
-  <div class="note">
-    <div class="date">01/24</div>
-    <div class="place">麵屋德家</div>
-    <div class="comment">牛肝菌雞貝鹽味拉麵，口味穩定，每次都好吃。</div>
-    <img src="images/image010.jpg" alt="麵屋德家 01/24">
-  </div>
-
-  <div class="note">
-    <div class="date">01/28</div>
-    <div class="place">麵屋德家</div>
-    <div class="comment">牛肝菌雞貝鹽味拉麵，湯頭濃郁，麵條彈牙。</div>
-    <img src="images/image011.jpg" alt="麵屋德家 01/28">
-  </div>
-
-  <div class="note">
-    <div class="date">01/31</div>
-    <div class="place">麒麟拉麵</div>
-    <div class="comment">特級牛肝菌豚骨醬油拉麵，湯香濃厚，味道豐富。</div>
-    <img src="images/image012.jpg" alt="麒麟拉麵 01/31">
-  </div>
-
-  <!-- 二月 -->
-  <h2>二月</h2>
-
-  <div class="note">
-    <div class="date">02/04</div>
-    <div class="place">麵屋德家</div>
-    <div class="comment">牛肝菌雞貝鹽味拉麵，延續一月的好味道。</div>
-    <img src="images/image013.jpg" alt="麵屋德家 02/04">
-  </div>
-
-  <div class="note">
-    <div class="date">02/07</div>
-    <div class="place">古流拉麵</div>
-    <div class="comment">烏來馬告南門市場魚介香草拉麵（限定），香氣特別。</div>
-    <img src="images/image014.jpg" alt="古流拉麵 02/07">
-  </div>
-
-  <div class="note">
-    <div class="date">02/08</div>
-    <div class="place">五之神製麵所</div>
-    <div class="comment">鮮魚系秋刀魚醬油拉麵（限定），湯鮮味美。</div>
-    <img src="images/image015.jpg" alt="五之神製麵所 02/08">
-  </div>
-
-  <div class="note">
-    <div class="date">02/11</div>
-    <div class="place">麵屋德家</div>
-    <div class="comment">牛肝菌雞貝鹽味拉麵，湯頭清爽，麵條彈牙。</div>
-    <img src="images/image016.jpg" alt="麵屋德家 02/11">
-  </div>
-
-  <footer>
-    <p style="text-align:center; margin-top:40px;">© 2026 Lean Chang</p>
-  </footer>
+  // 初始顯示統計
+  renderNotes();
+</script>
 </body>
 </html>
